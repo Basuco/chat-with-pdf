@@ -18,25 +18,21 @@
         event.preventDefault();
         loading = true;
         const question = event.target.question.value;
-        const apiURL = new URL('/api/ask');
         const searchParams = new URLSearchParams();
         searchParams('id', id);
         searchParams('question', question);
         try {
-            const res = await fetch(`/api/ask/${searchParams.toString()}`, {
-                method: 'GET',
-                headers:{
-                    'Content-Type': 'application/json' 
+            const eventSource = new EventSource(`/api/ask/${searchParams.toString()}`);
+            eventSource.onmessage = (event) => {
+                loading = false;
+                const incomingData = JSON.parse(event.data);
+
+                if (incomingData === '__END__') {
+                    eventSource.close();
+                    return;
                 }
-            });
-    
-            if (!res.ok) {
-                console.error('Error asking question');
-                return;
+                answer += incomingData;
             }
-            
-            const { response } = await res.json();
-            answer = response;
         } catch (e) {
             console.error(e);
             setAppStatusError();

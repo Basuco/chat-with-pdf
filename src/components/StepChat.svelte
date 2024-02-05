@@ -17,6 +17,7 @@
     const handleSubmit = async(event) => {
         event.preventDefault();
         loading = true;
+        answer = '';
         const question = event.target.question.value;
         const searchParams = new URLSearchParams();
         searchParams('id', id);

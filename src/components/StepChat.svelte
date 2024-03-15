@@ -5,6 +5,7 @@
 
     let answer = '';
     let loading = false;
+    let question = '';
 
     const numOfImagesToShow = Math.min(pages, 4);
     const images = Array.from({length: numOfImagesToShow}, (_, i) => {
@@ -18,22 +19,44 @@
         event.preventDefault();
         loading = true;
         answer = '';
-        const question = event.target.question.value;
+        // const question = event.target.question.value;
         const searchParams = new URLSearchParams();
-        searchParams('id', id);
-        searchParams('question', question);
-        try {
-            const eventSource = new EventSource(`/api/ask/${searchParams.toString()}`);
-            eventSource.onmessage = (event) => {
-                loading = false;
-                const incomingData = JSON.parse(event.data);
+        searchParams.append('id', id);
+        searchParams.append('question', question);
+        // try {
+        //     const eventSource = new EventSource(`/api/ask?${searchParams.toString()}`);
+        //     eventSource.onmessage = (event) => {
+        //         loading = false;
+        //         const incomingData = JSON.parse(event.data);
 
-                if (incomingData === '__END__') {
-                    eventSource.close();
-                    return;
+        //         if (incomingData === '__END__') {
+        //             eventSource.close();
+        //             return;
+        //         }
+        //         answer += incomingData;
+        //     }
+        // } catch (e) {
+        //     console.error(e);
+        //     setAppStatusError();
+        // } finally {
+        //     loading = false;
+        // }
+
+        try {
+            const res = await fetch(`/api/ask?${searchParams.toString()}`, {
+                method: 'GET',
+                headers:{
+                    'Content-Type': 'application/json'
                 }
-                answer += incomingData;
+            });
+
+            if (!res.ok) {
+                console.error('Error asking question');
+                return;
             }
+
+            const { response } = await res.json();
+            answer = response;
         } catch (e) {
             console.error(e);
             setAppStatusError();
@@ -50,7 +73,7 @@
 
 <form class="mt-8" on:submit={handleSubmit}>
     <Label for="question" class="block mb-2">Ask something</Label>
-    <Input for="question" required placeholder="What is this document for?"></Input>
+    <Input for="question" bind:value={question} required placeholder="What is this document for?"></Input>
 </form>
 
 {#if loading}
